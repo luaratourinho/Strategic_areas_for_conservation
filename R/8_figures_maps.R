@@ -12,12 +12,20 @@ library("gridExtra")
 
 # Reading files -----------------------------------------------------------
 
+# For species that I ran Euclidean Distance
+
+# Reading rasters
+
 outputs_mask <-
   list.files("./INEMA/ENM/outputs/soil/crop_mask_PAT/wgs84",
              full.names = T,
              'tif$')
 head(outputs_mask)
 outputs_mask <- stack(outputs_mask)
+outputs_mask <- outputs_mask[[-c(8,15,19,20)]]
+
+
+# Reading species names
 
 target_species <-
   read.csv(
@@ -27,12 +35,8 @@ target_species <-
   ) %>%
   pull(species)
 
-# sp = target_species[2]
-# species_df2 <-
-#   clean_df[clean_df$species == sp, ]
-# 
-# coordinates(species_df2) <- ~lon+lat
-# plot(species_df2, add=T)
+target_species <- target_species[-c(8,15,19,20)]
+
 
 # Figures -----------------------------------------------------
 
