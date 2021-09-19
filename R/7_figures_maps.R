@@ -1,8 +1,13 @@
 
-
+library(raster)
+library(dplyr)
+library(rgeos)
+library(reshape)
+library(rgdal)
 library(ggmap)
 library(ggplot2)
 library(scico)
+library("gridExtra")
 
 
 # Reading files -----------------------------------------------------------
@@ -22,6 +27,13 @@ target_species <-
   ) %>%
   pull(species)
 
+# sp = target_species[2]
+# species_df2 <-
+#   clean_df[clean_df$species == sp, ]
+# 
+# coordinates(species_df2) <- ~lon+lat
+# plot(species_df2, add=T)
+
 # Figures -----------------------------------------------------
 
 number_ticks <- function(n) {
@@ -29,13 +41,14 @@ number_ticks <- function(n) {
     pretty(limits, n)
 }
 
-n <- outputs_mask@data@nlayers
+#n <- outputs_mask@data@nlayers
+n <- length(outputs_mask@layers)
 p <- list()
 
 for (i in 1:n) {
   map.p <- rasterToPoints(outputs_mask[[i]])
   df <- data.frame(map.p)
-  colnames(df) <- c("Longitude", "Latitude", "MAP")
+  colnames(df) <- c("Longitude", "Latitude", "Distância Euclidiana")
   
   p[[i]] <- ggplot(data = df, aes(y = Latitude, x = Longitude)) +
     geom_raster(aes(fill = MAP)) + theme_bw() +
@@ -71,12 +84,11 @@ for (i in 1:n) {
 # Figures arrangement -----------------------------------------------------
 
 
-library("gridExtra")
 p_arrange <-
   grid.arrange(p[[1]], p[[2]], p[[3]], p[[4]], p[[5]], p[[6]], nrow = 2)
 ggsave(
   p_arrange,
-  file = "./fig_ED.tiff",
+  file = "./INEMA/ENM/outputs/soil/crop_mask_PAT/wgs84/fig_ED.tiff",
   height = 30,
   width = 42,
   units = "cm"
