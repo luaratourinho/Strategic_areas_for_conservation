@@ -55,7 +55,7 @@ for (i in 1:n) {
   colnames(df) <- c("Longitude", "Latitude", "Distância Euclidiana")
   
   p[[i]] <- ggplot(data = df, aes(y = Latitude, x = Longitude)) +
-    geom_raster(aes(fill = MAP)) + theme_bw() +
+    geom_raster(aes(fill = `Distância Euclidiana`)) + theme_bw() +
     coord_equal() +
     theme(
       axis.title.x = element_text(size = 16),
@@ -72,7 +72,8 @@ for (i in 1:n) {
     theme(axis.title.y = element_blank(),
           axis.title.x = element_blank()) + 
     theme(legend.justification = c(0.5, 0),legend.position = c(0.9, 0.05)) +
-    labs(title = "Acritopappus harleyi\n") +
+    # labs(title = "Acritopappus harleyi\n") +
+    labs(title = paste0(target_species[i], "\n")) +
     theme(plot.title = element_text(
       lineheight = .8,
       face = "italic",
@@ -83,7 +84,8 @@ for (i in 1:n) {
   
 }
 
-#(title = paste0(target_species[[i]] ,"\n")
+
+p[[4]]
 
 # Figures arrangement -----------------------------------------------------
 
