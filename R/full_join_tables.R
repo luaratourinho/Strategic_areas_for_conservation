@@ -22,3 +22,21 @@ campo_sara$source <- rep("campo_sara",nrow(campo_sara))
 sara_inema <- full_join(campo_sara, inema_list)
 sara_inema_19 <- full_join(sara_inema, table_MV_19)
 sara_inema_19_14 <- full_join(sara_inema_19, table_MV_14)
+sara_inema_19_14_gbif <- full_join(sara_inema_19_14, gbif_raw)
+
+colnames(splink_raw) <- c("record_id","modified","institutionCode","collectionCode",
+                "catalogNumber","basisOfRecord","kingdom","class","order",
+                "family","genus","specificEpithet","scientificName",
+                "scientificNameAuthorship","recordedBy","year","month_2","day_2",
+                "continentOcean","country","locality","decimalLongitude",
+                "decimalLatitude","verbatimLongitude","verbatimLatitude",
+                "occurrenceRemarks","barcode","imagecode","typeStatus",
+                "stateProvince","relatedCatalogItem","identifiedBy","phylum",
+                "recordNumber","county","minimumElevationInMeters",
+                "maximumElevationInMeters","yearIdentified","monthIdentified",
+                "coordinatePrecision","geoFlag","dayIdentified","preparationType",
+                "individualCount","fieldNumber","previousCatalogNumber","sex","source")
+
+sara_inema_19_14_gbif_splink <- full_join(sara_inema_19_14_gbif, splink_raw)
+
+write_csv(sara_inema_19_14_gbif_splink, file = "./INEMA/Tabelas/sara_inema_19_14_gbif_splink_fulljoin.csv")
