@@ -1,4 +1,5 @@
 
+
 # Function from Vilela et al. 2018 ----------------------------------------
 
 # Authors: Bruno Vilela, Filipe Augusto Nascimento & Marcos Vinícius Carneiro Vital
@@ -28,27 +29,40 @@ source("./R/dist_euc.R")
 # So,first we load the data.
 
 # Occurrence points
-occs <- read.table('./04_clean_byme.csv', header=TRUE, sep=';')
+occs <- read.table('./04_clean_byme.csv', header = TRUE, sep = ';')
 sp.names <- as.character(unique(occs$species))
-n <-length(sp.names)
+n <- length(sp.names)
 
 
 # Predictors
-fnames  <- list.files("./extent/pca_clim/pres", full.names = T, 'tif$')
+fnames  <-
+  list.files("./extent/pca_clim/pres", full.names = T, 'tif$')
 predictors <- stack(fnames)
+e <- extent(-60, -30, -25, -5)
+predictors <- crop(predictors, e)
+plot(predictors[[1]])
 
 
-for(i in 1:n){
+for (i in 1:n) {
+  occ2 <- occs[occs$species == sp.names[i], ]
+  occ <- occ2[, -1]
   
-occ2 <- occs[occs$species == sp.names[i],]
-occ <- occ2[,-1]
-
-result <- dist_euc(occ, predictors, method = "mean", suitability = FALSE,
-                   decostand.method = "standardize")
-
-
-writeRaster(result, filename = paste0("./outputs/clim/", sp.names[i],
-                                         "_ED_clim.tif"),
-            format="GTiff", overwrite=T)
-
+  result <-
+    dist_euc(
+      occ,
+      predictors,
+      method = "mean",
+      suitability = FALSE,
+      decostand.method = "standardize"
+    )
+  
+  
+  writeRaster(
+    result,
+    filename = paste0("./outputs/soil_ED/", sp.names[i],
+                      "_ED.tif"),
+    format = "GTiff",
+    overwrite = T
+  )
+  
 }

@@ -79,8 +79,12 @@ wc <- list.files("./extent/pca_soil_newscript",
                  full.names = TRUE) %>%
   stack()
 
-# e <- extent(-65,-30,-25,0)
-# wc <- crop(wc, e)
+
+#e <- extent(-65,-30,-25,0)
+e <- extent(-60,-30,-22,-5)
+wc <- crop(wc, e)
+plot(wc[[1]])
+
 
 # Parallel ----------------------------------------------------------------
 
