@@ -16,74 +16,85 @@ library(rgdal)
 
 # Cropping outputs to interested area ---------------------------------------
 
-mypolygon <- readOGR(dsn="./INEMA/arquivos felipe/Territorio_PAT", layer="territorio") 
+mypolygon <- readOGR(dsn="./PAT_territorio/", layer="PAT_wgs84") 
 
-crs.wgs84 <-
-  CRS("+proj=longlat +datum=WGS84 +no_defs")
-mypolygon_wgs84 <- spTransform(mypolygon, crs.wgs84)
+# crs.wgs84 <-
+#   CRS("+proj=longlat +datum=WGS84 +no_defs")
+# mypolygon_wgs84 <- spTransform(mypolygon, crs.wgs84)
 
 
 # Reading shape to crop ---------------------------------------------------
 
-# Euclidean Distance results
-
-outputs <- list.files("./INEMA/ENM/outputs/soil", 
-                     full.names = T, 'tif$')
-head(outputs)
-outputs_st <- stack(outputs)
-outputs_e <- crop(outputs_st, mypolygon_wgs84)
-outputs_mask <- mask(outputs_e, mypolygon_wgs84)
-
 # SDM results
 
-sp1 <- raster("./INEMA/ENM/outputs/models/Ensemble_species/Hybanthus_albus_TSSmax_ensemble_weighted_average.tif")
-sp1 <- crop(sp1, mypolygon_wgs84)
-sp1 <- mask(sp1, mypolygon_wgs84)
+outputs2 <- list.files("./outputs/Ensemble_SDM", 
+                       full.names = T, 'tif$')
+head(outputs2)
+outputs_st2 <- raster(outputs2[[1]])
+outputs_e2 <- crop(outputs_st2, mypolygon)
+outputs_mask2 <- mask(outputs_e2, mypolygon)
 
-sp2 <- raster("./INEMA/ENM/outputs/models/Ensemble_species/Oocephalus_nubicola_TSSmax_ensemble_weighted_average.tif")
-sp2 <- crop(sp2, mypolygon_wgs84)
-sp2 <- mask(sp2, mypolygon_wgs84)
+outputs_st3 <- raster(outputs2[[2]])
+outputs_e3 <- crop(outputs_st3, mypolygon)
+outputs_mask3 <- mask(outputs_e3, mypolygon)
 
-sp3 <- raster("./INEMA/ENM/outputs/models/Ensemble_species/Philcoxia_bahiensis_TSSmax_ensemble_weighted_average.tif")
-sp3 <- crop(sp3, mypolygon_wgs84)
-sp3 <- mask(sp3, mypolygon_wgs84)
+outputs_st4 <- raster(outputs2[[3]])
+outputs_e4 <- crop(outputs_st4, mypolygon)
+outputs_mask4 <- mask(outputs_e4, mypolygon)
 
-sp4 <- raster("./INEMA/ENM/outputs/models/Ensemble_species/Piriqueta_flammea_TSSmax_ensemble_weighted_average.tif")
-sp4 <- crop(sp4, mypolygon_wgs84)
-sp4 <- mask(sp4, mypolygon_wgs84)
+outputs_st5 <- raster(outputs2[[4]])
+outputs_e5 <- crop(outputs_st5, mypolygon)
+outputs_mask5 <- mask(outputs_e5, mypolygon)
 
-outputs_mask_2 <- stack(sp1,sp2,sp3,sp4)
+outputs_modleR <- stack(outputs_mask2,outputs_mask3,outputs_mask4,outputs_mask5)
+
+
+# Euclidean Distance results
+
+outputs <- list.files("./outputs/soil_ED", 
+                      full.names = T, 'tif$')
+head(outputs)
+outputs_st <- stack(outputs)
+outputs_e <- crop(outputs_st, mypolygon)
+outputs_mask <- mask(outputs_e, mypolygon)
 
 # Normalizing -------------------------------------------------------------
 
-n <- outputs_mask@data@nlayers
+# ED
+
+outputs_mask_ED <- outputs_mask
+n <- outputs_mask_ED@data@nlayers
 
 for(z in 1:n){
-  adeq = outputs_mask[[z]]
+  adeq = outputs_mask_ED[[z]]
   minimo <- min(adeq[], na.rm=T)
   maximo <- max(adeq[], na.rm=T)
   adeq_norm <- function(x) {(x-minimo)/(maximo-minimo)}
-  outputs_mask[[z]] <- calc(adeq, adeq_norm)
+  outputs_mask_ED[[z]] <- calc(adeq, adeq_norm)
 }
+
+names(outputs_mask_ED) <- names(outputs_mask)
+
+# SDM
+
+outputs_mask_SDM <- outputs_modleR
+n <- outputs_mask_ED@data@nlayers
+
+for(z in 1:n){
+  adeq = outputs_mask_SDM[[z]]
+  minimo <- min(adeq[], na.rm=T)
+  maximo <- max(adeq[], na.rm=T)
+  adeq_norm <- function(x) {(x-minimo)/(maximo-minimo)}
+  outputs_mask_SDM[[z]] <- calc(adeq, adeq_norm)
+}
+
+names(outputs_mask_SDM) <- names(outputs_modleR)
 
 # Saving ------------------------------------------------------------------
 
-# wgs84
-
-proj4string(outputs_mask) <- crs.wgs84
-
-writeRaster(outputs_mask, filename='./INEMA/ENM/outputs/soil/crop_mask_PAT/wgs84/', 
+writeRaster(outputs_mask_ED, filename='./outputs/crop_PAT/ED/', 
             format="GTiff", bylayer=TRUE, suffix="names", overwrite=TRUE)
 
-writeRaster(outputs_mask_2, filename='./INEMA/ENM/outputs/models/recorte_PAT/', 
-            format="GTiff", bylayer=TRUE, suffix="names", overwrite=TRUE)
-
-
-# dando erro
-crs.sirgas <-
-  CRS(" +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs")
-outputs_mask_sirgas <- projectRaster(outputs_mask, crs.sirgas)
-
-writeRaster(outputs_mask_sirgas, filename='./INEMA/ENM/outputs/soil/crop_mask_PAT/sirgas2000/', 
+writeRaster(outputs_mask_SDM, filename='./outputs/crop_PAT/SDM/', 
             format="GTiff", bylayer=TRUE, suffix="names", overwrite=TRUE)
 

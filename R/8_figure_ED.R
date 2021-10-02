@@ -17,22 +17,18 @@ library("gridExtra")
 # Reading rasters
 
 outputs_mask <-
-  list.files("./INEMA/ENM/outputs/soil/crop_mask_PAT/wgs84",
+  list.files("./outputs/crop_PAT/ED",
              full.names = T,
              'tif$')
 head(outputs_mask)
 outputs_mask <- stack(outputs_mask)
-outputs_mask <- outputs_mask[[-c(8,15,19,20)]]
-
 
 # Reading species names
 
 target_species <-
   read.csv(
-    "./INEMA/Tabelas/occs/04_n_thinned_records_byme.csv",
-    stringsAsFactors = FALSE,
-    sep = ";"
-  ) %>%
+    "./occs/n_records_to_report.csv",
+    stringsAsFactors = FALSE) %>%
   pull(species)
 
 target_species <- target_species[-c(8,15,19,20)]
@@ -71,7 +67,9 @@ for (i in 1:n) {
     scico::scale_fill_scico(palette = "lajolla") +
     theme(axis.title.y = element_blank(),
           axis.title.x = element_blank()) + 
-    theme(legend.justification = c(0.5, 0),legend.position = c(0.9, 0.05)) +
+    theme(legend.justification = c(0.5, 0),
+          legend.position = c(0.9, 0.05),
+          legend.text = element_text(size=15)) +
     # labs(title = "Acritopappus harleyi\n") +
     labs(title = paste0(target_species[i], "\n")) +
     theme(plot.title = element_text(
@@ -85,37 +83,53 @@ for (i in 1:n) {
 }
 
 
-p[[4]]
+p[[5]]
+
 
 # Figures arrangement -----------------------------------------------------
 
-
-p_arrange <-
-  grid.arrange(p[[1]], p[[2]], p[[3]], p[[4]], p[[5]], p[[6]], nrow = 2)
-ggsave(
-  p_arrange,
-  file = "./INEMA/ENM/outputs/soil/crop_mask_PAT/wgs84/fig_ED.tiff",
-  height = 30,
-  width = 42,
-  units = "cm"
-)
+# p_arrange <-
+#   grid.arrange(p[[1]], p[[2]], p[[3]], p[[4]], p[[5]], p[[6]], nrow = 3)
+# ggsave(
+#   p_arrange,
+#   file = "./Figures/ED_1_6.tiff",
+#   height = 30,
+#   width = 30,
+#   units = "cm"
+# )
 
 p_arrange <-
   grid.arrange(p[[1]], p[[2]], p[[3]], p[[4]], p[[5]], p[[6]], p[[7]],
-               p[[8]], p[[9]], p[[10]], p[[11]], p[[12]], nrow = 4)
+               p[[8]], nrow = 4)
 ggsave(
   p_arrange,
-  file = "./fig_ED.tiff",
-  height = 70,
-  width = 94,
+  file = "./Figures/ED_1_8.tiff",
+  height = 50,
+  width = 30,
   units = "cm"
 )
 
+p_arrange2 <-
+  grid.arrange(p[[9]], p[[10]], p[[11]], p[[12]], p[[13]], p[[14]], p[[15]], 
+               p[[16]], nrow = 4)
+ggsave(
+  p_arrange2,
+  file = "./Figures/ED_9_16.tiff",
+  height = 50,
+  width = 30,
+  units = "cm"
+)
 
-p_arrange <- grid.arrange(p[[13]], p[[14]], p[[15]], p[[16]], p[[17]],
-                          p[[18]], p[[19]], p[[20]], p[[21]], p[[22]], p[[23]], p[[24]], p[[25]],
-                          p[[26]], p[[27]], nrow = 20)
+p_arrange3 <-
+  grid.arrange(p[[17]],p[[18]], p[[19]], p[[20]], p[[21]], p[[22]], p[[23]], nrow = 4)
 
+ggsave(
+  p_arrange3,
+  file = "./Figures/ED_17_23.tiff",
+  height = 50,
+  width = 30,
+  units = "cm"
+)
 
 
 
