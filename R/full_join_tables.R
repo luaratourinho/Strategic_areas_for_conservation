@@ -121,3 +121,49 @@ colnames(cncflora_valided_no_hyal_end) <- c("species", "lon", "lat")
 
 # saving CNCFlora list for target species without Hybanthus albus
 write_csv(cncflora_valided_no_hyal_end, file = "./INEMA/Tabelas/cncflora_valided_no_hyal.csv")
+
+
+
+# Checking lefting species ------------------------------------------------
+
+all_sp <- read_csv("./INEMA/Tabelas/sara_inema_19_14_gbif_splink_fulljoin.csv")
+cncflora_valided_fauna <- read_csv("./INEMA/Tabelas/Coordenadas_utilizadas_ENM/cncflora_valided_no_hyal_11sp_Ful_stu_fauna.csv")
+hy_al <- read_csv("./INEMA/Tabelas/Coordenadas_utilizadas_ENM/Hybanthus_albus_Juliana_Paula_Souza.csv")
+
+valided_sp <- full_join(cncflora_valided_fauna,hy_al)
+
+write_csv(valided_sp, file = "./INEMA/Tabelas/valided_sp.csv")
+
+
+# choosing only 3 columns
+all_sp <- all_sp %>% 
+  select(species, decimalLongitude, decimalLatitude)
+
+# rename columns
+colnames(all_sp) <- c("species", "lon", "lat")
+
+
+valided_sp_unique <- as.vector(unique(valided_sp$species))
+all_sp_unique <- unique(all_sp$species)
+
+unique(valided_sp$species)
+
+no_valid_sp <- subset(all_sp, !species %in% valided_sp_unique)
+
+unique(no_valid_sp$species)
+
+# run 3_geographical_cleaning_novalid
+write_csv(no_valid_sp, file = "./INEMA/Tabelas/no_valid_sp.csv")
+
+#creating final table to repot
+novalid_sp <- read_csv("./INEMA/Tabelas/Coordenadas_utilizadas_ENM/novalid_thin.csv")
+cncflora_valided_fauna <- read_csv("./INEMA/Tabelas/Coordenadas_utilizadas_ENM/cncflora_valided_no_hyal_11sp_Ful_stu_fauna_thin.csv")
+hy_al <- read_csv("./INEMA/Tabelas/Coordenadas_utilizadas_ENM/Hybanthus_albus_Juliana_Paula_Souza.csv")
+
+valid_only <- cncflora_valided_fauna %>%
+  full_join(hy_al, by = c("species", "lon", "lat"))
+
+valid_and_no_report <- valid_only %>%
+  full_join(novalid_sp, by = c("species", "lon", "lat"))
+
+write_csv(valid_and_no_report, path = "./INEMA/Tabelas/Coordenadas_utilizadas_ENM/all_sp_thin_to_report.csv")

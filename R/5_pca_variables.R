@@ -1,6 +1,7 @@
 # script description #
 # script:  variables - pca projection
 
+
 # packages
 library(factoextra)
 library(FactoMineR)
