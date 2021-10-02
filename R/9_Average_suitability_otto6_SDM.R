@@ -2,6 +2,7 @@ library(sp)
 library(rgdal)
 library(raster)
 library(dplyr)
+library("gridExtra")
 
 target_species <-
   read.csv(
@@ -9,14 +10,14 @@ target_species <-
     stringsAsFactors = FALSE) %>%
   pull(species)
 
-target_species <- target_species[-c(8,15,19,20)]
+target_species <- target_species[c(8,15,19,20)]
 
 
 # Load polygon
 nivel6 <- shapefile("./PAT_territorio/PAT_ottonivel6.shp")
 
 # Load all rasters
-outputs <- list.files("./outputs/crop_PAT/ED", ".tif", full.names = TRUE)
+outputs <- list.files("./outputs/crop_PAT/SDM", ".tif", full.names = TRUE)
 suitability <- stack(outputs)
 
 # Reproject polygon
@@ -43,15 +44,13 @@ resultado <- do.call(rbind, resultado)
 nivel6@data <- cbind(nivel6@data, resultado) 
 
 writeOGR(nivel6, dsn = "./outputs/crop_PAT/nivel6",
-         layer = "nivel6_ED", driver="ESRI Shapefile", overwrite=T)
+         layer = "nivel6_SDM", driver="ESRI Shapefile", overwrite=T)
 
 
 # Plot --------------------------------------------------------------------
 
 library(tidyverse)
 library(sf)
-
-nivel6 <- shapefile("./outputs/crop_PAT/nivel6/nivel6_ED.shp")
 
 number_ticks <- function(n) {
   function(limits)
@@ -61,9 +60,9 @@ number_ticks <- function(n) {
 nivel6_sf <- st_as_sf(nivel6)
 
 loop_list <- colnames(nivel6_sf)[-(1:4)]
-loop_list <- loop_list[-24]
+loop_list <- loop_list[-5]
 
-g <- list()
+p <- list()
 
 # for (i in 1:length(loop_list)) {
 #   g[[i]] <- ggplot(nivel6_sf) +
@@ -73,7 +72,7 @@ g <- list()
 # g[[1]]
 
 for (i in 1:length(loop_list)) {
-  g[[i]] <- ggplot(nivel6_sf) +
+  p[[i]] <- ggplot(nivel6_sf) +
     geom_sf(aes_string(fill = loop_list[i])) + 
     scico::scale_fill_scico(palette = "lajolla") +
     theme_bw() +
@@ -100,48 +99,25 @@ for (i in 1:length(loop_list)) {
       lineheight = .8,
       face = "italic",
       size = 20
-    )) +
-    coord_sf(expand = T) +
-    scale_x_continuous(breaks = -42:-39) +
-    scale_y_continuous(breaks = -12:-14)
-  
+    ))+
+      coord_sf(expand = T) +
+      scale_x_continuous(breaks = -42:-39) +
+      scale_y_continuous(breaks = -12:-14)
+      # scale_y_continuous(labels = scales::number_format(accuracy = 1),
+      #                    breaks = number_ticks(3))
 }
 
-g[[1]]
+p[[1]]
 
 
 # Figures arrangement -----------------------------------------------------
 
 p_arrange <-
-  grid.arrange(g[[1]], g[[2]], g[[3]], g[[4]], g[[5]], g[[6]], g[[7]],
-               g[[8]], nrow = 4)
+  grid.arrange(p[[1]], p[[2]], p[[3]], p[[4]], nrow = 2)
 ggsave(
   p_arrange,
-  file = "./Figures/ED/nivel6_ED_1_8_2.tiff",
-  height = 50,
-  width = 30,
+  file = "./Figures/SDM/nivel6_SDM_1_4.tiff",
+  height = 20,
+  width = 26,
   units = "cm"
 )
-
-p_arrange2 <-
-  grid.arrange(g[[9]], g[[10]], g[[11]], g[[12]], g[[13]], g[[14]], g[[15]], 
-               g[[16]], nrow = 4)
-ggsave(
-  p_arrange2,
-  file = "./Figures/ED/nivel6_ED_9_16_2.tiff",
-  height = 50,
-  width = 30,
-  units = "cm"
-)
-
-p_arrange3 <-
-  grid.arrange(g[[17]],g[[18]], g[[19]], g[[20]], g[[21]], g[[22]], g[[23]], nrow = 4)
-
-ggsave(
-  p_arrange3,
-  file = "./Figures/ED/nivel6_ED_17_23_2.tiff",
-  height = 50,
-  width = 30,
-  units = "cm"
-)
-
