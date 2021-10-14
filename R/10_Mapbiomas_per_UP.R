@@ -59,15 +59,28 @@ writeOGR(nivel6, dsn = "./INEMA/Spatial_files_PAT/Mapbiomas",
          layer = "PAT_n6_edsdm_diffuniao_mapbi", driver="ESRI Shapefile", overwrite=T)
 
 
-# Ps.: the weight of this criterion I added by excel manually
+# Ps.: the weight for restoration of this criterion I added by excel manually
 
+# 19.4% to 0% less relevant --> 0.8 at max
+values_1_122 <- seq(from=0, to=0.9, length = 119)
+# 19.5 to 19.9 <- 0.9
+# 40.4% a 20% very relevant --> 1
+# 40.5 to 40.9 <- 0.9
+# 60.4% a 41% relevant --> 0.8
+# > 60.5% pouco relevante --> 0.7 at max
+values_360_565 <- seq(from=0, to=0.8, length = 205)
+NA_gap_123_259 <- rep("NA", times = 136)
 
+values_add_to_table <- as.data.frame(cbind(values_1_122,NA_gap_123_259,values_360_565))
+write.csv(values_add_to_table, "./INEMA/Spatial_files_PAT/Join_results/values_add_to_table.csv")
 
 # Cut for PAT extension to plot ----------------------------------------
 
 nivel6_PAT <- shapefile("./INEMA/Spatial_files_PAT/PAT_territorio/nivel6/PAT_ottonivel6_wgs84.shp")
+nivel6_mapbi <- shapefile("./INEMA/Spatial_files_PAT/Join_results/PAT_n6_edsdm_diffuniao_mapbi_peso.shp")
 
-PAT_nivel6_Mapbiomas <- crop(nivel6, nivel6_PAT)
+#PAT_nivel6_Mapbiomas <- crop(nivel6, nivel6_PAT)
+PAT_nivel6_Mapbiomas_peso <- crop(nivel6_mapbi, nivel6_PAT)
 
 
 # Plot -----------------------------------------------------------------
@@ -75,16 +88,14 @@ PAT_nivel6_Mapbiomas <- crop(nivel6, nivel6_PAT)
 library(tidyverse)
 library(sf)
 library(ggplot2)
+library("gridExtra")
 
-# number_ticks <- function(n) {
-#   function(limits)
-#     pretty(limits, n)
-# }
+# Habitat amount for conservation areas
 
-nivel6_sf <- st_as_sf(PAT_nivel6_Mapbiomas)
+nivel6_sf <- st_as_sf(PAT_nivel6_Mapbiomas_peso)
 
 p <- ggplot(nivel6_sf) +
-    geom_sf(aes_string(fill = "percent_mapbiomas")) + 
+    geom_sf(aes_string(fill = "prcnt_m")) + 
   scale_fill_gradient(low = "white", high = "darkgreen")+
     theme_bw() +
     coord_sf() +
@@ -104,7 +115,7 @@ p <- ggplot(nivel6_sf) +
     theme(legend.justification = c(0.5, 0),
           legend.position = c(0.9, 0.05),
           legend.text = element_text(size=15)) +
-    # labs(title = "Acritopappus harleyi\n") +
+    labs(title = "Quantidade de habitat (%)\n") +
     theme(plot.title = element_text(
       lineheight = .8,
       face = "italic",
@@ -119,9 +130,62 @@ p <- ggplot(nivel6_sf) +
 
 p 
 
+# ggsave(
+#   p,
+#   file = "./INEMA/Spatial_files_PAT/Mapbiomas/Mapbiomas_0_100.tiff",
+#   height = 20,
+#   width = 26,
+#   units = "cm"
+# )
+
+
+# Habitat amount weighted for restoration areas 
+
+#nivel6_w_sf <- st_as_sf(PAT_nivel6_Mapbiomas_peso)
+
+p2 <- ggplot(nivel6_w_sf) +
+  geom_sf(aes_string(fill = "peso")) + 
+  scale_fill_gradient(low = "white", high = "darkgreen")+
+  theme_bw() +
+  coord_sf() +
+  theme(
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16, angle = 90),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.key = element_blank()
+  ) +
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_blank()) + 
+  theme(legend.justification = c(0.5, 0),
+        legend.position = c(0.9, 0.05),
+        legend.text = element_text(size=15)) +
+  labs(title = "Quantidade de habitat sob peso\n") +
+  theme(plot.title = element_text(
+    lineheight = .8,
+    face = "italic",
+    size = 20
+  ))+
+  coord_sf(expand = T) +
+  scale_x_continuous(breaks = -42:-39) +
+  scale_y_continuous(breaks = -12:-14)
+# scale_y_continuous(labels = scales::number_format(accuracy = 1),
+#                    breaks = number_ticks(3))
+
+
+p2 
+
+
+p_arrange <-
+  grid.arrange(p, p2, nrow = 1)
 ggsave(
-  p,
-  file = "./INEMA/Spatial_files_PAT/Mapbiomas/Mapbiomas_0_100.tiff",
+  #p,
+  p_arrange,
+  file = "./INEMA/Spatial_files_PAT/Mapbiomas/Figures/Mapbiomas_conserv_resto.tiff",
   height = 20,
   width = 26,
   units = "cm"
