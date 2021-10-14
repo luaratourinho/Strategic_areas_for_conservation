@@ -5,31 +5,33 @@ library(dplyr)
 library(memisc)
 
 # Load polygon
-nivel6 <- shapefile("./INEMA/Spatial_files_PAT/PAT_territorio/nivel6/PAT_otto6_buf10_dif_uni_wgs.shp")
+nivel6 <- shapefile("./INEMA/Spatial_files_PAT/Join_results/PAT_n6_wgs_edsdm_idnv_diffuniao.shp")
 
 # Load rasters
 veg_cover <- raster("./INEMA/Spatial_files_PAT/Mapbiomas/PAT_nivel6_buf10km.tif")
 
 # Add NA with is needed
-veg_cover_NA <- veg_cover
-veg_cover_NA[veg_cover_NA == 0] <- NA
-veg_cover_NA[!is.na(veg_cover_NA)] <- 1
+# veg_cover_NA <- veg_cover
+# veg_cover_NA[veg_cover_NA == 0] <- NA
+# veg_cover_NA[!is.na(veg_cover_NA)] <- 1
 
 #writeRaster(veg_cover_NA, "./PAT_territorio/veg_cover_NA.tif")
 
 # Test with coarse resolution raster
 # 1 km, i.e., res = 0.008333333, before was 0.0002694946
-res <- raster("./outputs/soil_ED/Acritopappus harleyi_ED.tif")
-res_crop <- crop(res,veg_cover)
-veg_cover_1km <- resample(veg_cover_NA, res_crop, method="bilinear")
-veg_cover_1km_2 <- veg_cover_1km
-veg_cover_1km_2[!is.na(veg_cover_1km_2)] <- 1
-veg_cover_1km_2[is.na(veg_cover_1km_2)] <- 0
+# res <- raster("./outputs/soil_ED/Acritopappus harleyi_ED.tif")
+# res_crop <- crop(res,veg_cover)
+# veg_cover_1km <- resample(veg_cover_NA, res_crop, method="bilinear")
+# veg_cover_1km_2 <- veg_cover_1km
+# veg_cover_1km_2[!is.na(veg_cover_1km_2)] <- 1
+# veg_cover_1km_2[is.na(veg_cover_1km_2)] <- 0
 
 
 # Percentage of habitat per feature ---------------------------------------
 
 # Extract data (if you want to run for one: extract(raster(suitability, i), nivel6))
+
+#veg_cover_crop <- crop(veg_cover,nivel6)
 
 veg_cover_per_pol <- extract(veg_cover, nivel6)
 #veg_cover_per_pol <- extract(veg_cover_1km_2, nivel6) #to test only
@@ -40,24 +42,32 @@ func_perc <- function(x) {
 
 # func_perc(veg_cover_per_pol[[3]]) #to see only one
 #resultado <- lapply(veg_cover_per_pol, func_perc) #could use lapply, but then you need organize the list later
-resultado <- sapply(veg_cover_per_pol, func_perc)
-resultado
+percent_mapbiomas <- sapply(veg_cover_per_pol, func_perc)
+percent_mapbiomas
 
 # Add the percentage to the shapefile
-nivel6@data <- cbind(nivel6@data, resultado) 
+nivel6@data <- cbind(nivel6@data, percent_mapbiomas) 
+
+# Normalizing
+range01  <- function(x){(x-min(x))/(max(x)-min(x))}
+perc_mapbi_norm <- range01(percent_mapbiomas)
+perc_mapbi_norm
+nivel6@data <- cbind(nivel6@data, perc_mapbi_norm) 
 
 # Save result
 writeOGR(nivel6, dsn = "./INEMA/Spatial_files_PAT/Mapbiomas",
-         layer = "Mapbiomas_perc_nivel6", driver="ESRI Shapefile", overwrite=T)
+         layer = "PAT_n6_edsdm_diffuniao_mapbi", driver="ESRI Shapefile", overwrite=T)
+
+
+# Ps.: the weight of this criterion I added by excel manually
 
 
 
-# Cut for PAT extension ---------------------------------------------------
+# Cut for PAT extension to plot ----------------------------------------
 
 nivel6_PAT <- shapefile("./INEMA/Spatial_files_PAT/PAT_territorio/nivel6/PAT_ottonivel6_wgs84.shp")
 
 PAT_nivel6_Mapbiomas <- crop(nivel6, nivel6_PAT)
-
 
 
 # Plot -----------------------------------------------------------------
@@ -74,7 +84,7 @@ library(ggplot2)
 nivel6_sf <- st_as_sf(PAT_nivel6_Mapbiomas)
 
 p <- ggplot(nivel6_sf) +
-    geom_sf(aes_string(fill = "resultado")) + 
+    geom_sf(aes_string(fill = "percent_mapbiomas")) + 
   scale_fill_gradient(low = "white", high = "darkgreen")+
     theme_bw() +
     coord_sf() +
