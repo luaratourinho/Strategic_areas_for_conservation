@@ -9,7 +9,6 @@ library("gridExtra")
 # Read polygon
 focos <- shapefile("./INEMA/Spatial_files_PAT/Focos_incendio/Focos_por_UP_wgs84.shp")
 
-
 # Normalizing -------------------------------------------------------------
 
 range01  <- function(x){(x-min(x))/(max(x)-min(x))}
@@ -38,6 +37,8 @@ writeOGR(focos, dsn = "./INEMA/Spatial_files_PAT/Focos_incendio",
 
 
 # Plots -------------------------------------------------------------------
+
+focos <- shapefile("./INEMA/Spatial_files_PAT/Focos_incendio/focos_norm_wgs.shp")
 
 focos_sf <- st_as_sf(focos)
 
@@ -135,6 +136,6 @@ ggsave(
   p_arrange,
   file = "./INEMA/Spatial_files_PAT/Focos_incendio/Focos_por_UP_figure_both.tiff",
   height = 20,
-  width = 60,
+  width = 26,
   units = "cm"
 )
