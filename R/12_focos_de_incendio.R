@@ -22,6 +22,21 @@ writeOGR(focos, dsn = "./INEMA/Spatial_files_PAT/Focos_incendio",
          layer = "focos_norm_wgs", driver="ESRI Shapefile", overwrite=T)
 
 
+
+
+# save in genereal result shapefile (I did manually)
+# nivel6 <- shapefile("./INEMA/Spatial_files_PAT/Join_results/PAT_n6_edsdm_difuniao_mapb_peso_neig.shp")
+# 
+# n_focos <- focos@data$NUMPOINTS
+# nivel6@data <- cbind(nivel6@data, n_focos)
+# nivel6@data <- cbind(nivel6@data, focos_norm)
+# 
+# # Save result
+# writeOGR(nivel6, dsn = "./INEMA/Spatial_files_PAT/Join_results",
+#          layer = "PAT_n6_edsdm_difuniao_mapb_peso_neig_fg", driver="ESRI Shapefile", overwrite=T)
+
+
+
 # Plots -------------------------------------------------------------------
 
 focos_sf <- st_as_sf(focos)
