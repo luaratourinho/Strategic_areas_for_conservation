@@ -7,7 +7,7 @@ library("gridExtra")
 # Focos de incêndio por UP ------------------------------------------------
 
 # Read polygon
-focos <- shapefile("./INEMA/Spatial_files_PAT/Focos_incendio/Focos_por_UP_wgs84.shp")
+focos <- shapefile("./Fogo/Focos_por_UP_wgs84.shp")
 
 # Normalizing -------------------------------------------------------------
 
@@ -16,11 +16,18 @@ focos_norm <- range01(focos@data$NUMPOINTS)
 focos_norm
 focos@data <- cbind(focos@data, focos_norm) 
 
+# Invert scale
+
+library("spatialEco")
+focos_norm_inv <- (((focos_norm - max(focos_norm)) * -1) + min(focos_norm))
+names(focos_norm_inv) <- names(focos_norm)
+foc_norm_inv <- focos_norm_inv
+focos@data <- cbind(focos@data, foc_norm_inv)
+
 # Save result
-writeOGR(focos, dsn = "./INEMA/Spatial_files_PAT/Focos_incendio",
-         layer = "focos_norm_wgs", driver="ESRI Shapefile", overwrite=T)
-
-
+writeOGR(focos
+, dsn = "./Fogo",
+         layer = "Focos_por_UP_inv", driver="ESRI Shapefile", overwrite=T)
 
 
 # save in genereal result shapefile (I did manually)
@@ -38,13 +45,13 @@ writeOGR(focos, dsn = "./INEMA/Spatial_files_PAT/Focos_incendio",
 
 # Plots -------------------------------------------------------------------
 
-focos <- shapefile("./INEMA/Spatial_files_PAT/Focos_incendio/focos_norm_wgs.shp")
+#focos <- shapefile("./INEMA/Spatial_files_PAT/Focos_incendio/focos_norm_wgs.shp")
 
 focos_sf <- st_as_sf(focos)
 
 p <- ggplot(focos_sf) +
   geom_sf(aes_string(fill = "NUMPOINTS")) + 
-  scale_fill_gradient(low = "white", high = "darkred") +
+  scico::scale_fill_scico(palette = "lajolla") +
   theme_bw() +
   coord_sf() +
   theme(
@@ -78,7 +85,7 @@ p
 
 ggsave(
   p,
-  file = "./INEMA/Spatial_files_PAT/Focos_incendio/Focos_por_UP_figure.tiff",
+  file = "./Fogo/Focos_por_UP_figure.tiff",
   height = 20,
   width = 26,
   units = "cm"
@@ -88,8 +95,8 @@ ggsave(
 # Normalized
 
 p2 <- ggplot(focos_sf) +
-  geom_sf(aes_string(fill = "focos_norm")) + 
-  scale_fill_gradient(low = "white", high = "darkred") +
+  geom_sf(aes_string(fill = "foc_norm_inv")) + 
+  scico::scale_fill_scico(palette = "lajolla", direction = -1) +
   theme_bw() +
   coord_sf() +
   theme(
@@ -123,7 +130,7 @@ p2
 
 ggsave(
   p2,
-  file = "./INEMA/Spatial_files_PAT/Focos_incendio/Focos_por_UP_figure_norm.tiff",
+  file = "./Fogo/Focos_por_UP_figure_norm_inv.tiff",
   height = 20,
   width = 26,
   units = "cm"
@@ -134,7 +141,7 @@ p_arrange <-
 ggsave(
   #p,
   p_arrange,
-  file = "./INEMA/Spatial_files_PAT/Focos_incendio/Focos_por_UP_figure_both.tiff",
+  file = "./Fogo/Focos_por_UP_figure_both.tiff",
   height = 20,
   width = 26,
   units = "cm"
