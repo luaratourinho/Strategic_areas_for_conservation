@@ -53,6 +53,26 @@ writeOGR(nivel6, dsn = "./outputs/crop_PAT/nivel6",
          layer = "nivel6_ED_inv", driver="ESRI Shapefile", overwrite=T)
 
 
+# Renaming -------------------------------------------------------------
+
+nivel6_ED <- shapefile("./outputs/crop_PAT/nivel6/nivel6_ED_inv.shp")
+
+names_cols <- c("NUNIV", "VERSA", "Shp_L",
+                "Shp_A", "Acri_harl", "Acri_pint",
+                "Avic_gamb", "Bauh_glaz", "Coar_cess",
+                "Fulc_stue", "Heli_rufi", "Ilex_auri",
+                "Mand_hats", "Melo_illi", "Meta_diam",
+                "Micr_stre", "Micr_suba", "Ormo_timb",
+                "Pass_timb", "Pavo_palm", "Rayl_bahi",
+                "Sene_rico", "Sinn_macr", "Styl_glom",
+                "Tric_mori", "Vello_cane", "Xyri_fibr")
+
+names(nivel6_ED)[] <- names_cols
+
+writeOGR(nivel6_ED, dsn = "./outputs/crop_PAT/nivel6",
+         layer = "nivel6_ED_names", driver="ESRI Shapefile", overwrite=T)
+
+
 # Plot --------------------------------------------------------------------
 
 library(tidyverse)

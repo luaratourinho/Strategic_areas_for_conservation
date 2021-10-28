@@ -47,6 +47,20 @@ writeOGR(nivel6, dsn = "./outputs/crop_PAT/nivel6",
          layer = "nivel6_SDM", driver="ESRI Shapefile", overwrite=T)
 
 
+# Renaming -------------------------------------------------------------
+
+nivel6_SDM <- shapefile("./outputs/crop_PAT/nivel6/nivel6_SDM.shp")
+
+names_cols <- c("NUNIV", "VERSA", "Shp_L",
+                "Shp_A", "Hyba_albu", "Ooce_nubi",
+                "Phil_bahi",	"Piri_flam")
+
+names(nivel6_SDM)[] <- names_cols
+
+writeOGR(nivel6_SDM, dsn = "./outputs/crop_PAT/nivel6",
+         layer = "nivel6_SDM_names", driver="ESRI Shapefile", overwrite=T)
+
+
 # Plot --------------------------------------------------------------------
 
 library(tidyverse)
