@@ -19,6 +19,13 @@ nivel6 <- shapefile("./PAT_territorio/PAT_ottonivel6.shp")
 outputs <- list.files("./outputs/crop_PAT/ED", ".tif", full.names = TRUE)
 suitability <- stack(outputs)
 
+# Invert scale
+
+library("spatialEco")
+suitability_inv <- (((suitability - max(suitability)) * -1) + min(suitability))
+names(suitability_inv) <- names(suitability)
+suitability <- suitability_inv
+
 # Reproject polygon
 projection(suitability) <- projection(raster())
 
@@ -43,15 +50,16 @@ resultado <- do.call(rbind, resultado)
 nivel6@data <- cbind(nivel6@data, resultado) 
 
 writeOGR(nivel6, dsn = "./outputs/crop_PAT/nivel6",
-         layer = "nivel6_ED", driver="ESRI Shapefile", overwrite=T)
+         layer = "nivel6_ED_inv", driver="ESRI Shapefile", overwrite=T)
 
 
 # Plot --------------------------------------------------------------------
 
 library(tidyverse)
 library(sf)
+library("gridExtra")
 
-nivel6 <- shapefile("./outputs/crop_PAT/nivel6/nivel6_ED.shp")
+nivel6 <- shapefile("./outputs/crop_PAT/nivel6/nivel6_ED_inv.shp")
 
 number_ticks <- function(n) {
   function(limits)
