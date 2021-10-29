@@ -1,5 +1,3 @@
-#Loading packages 
-
 library(tidyverse)
 library(sf)
 library(ggplot2)
@@ -23,8 +21,14 @@ focos@data <- cbind(focos@data, focos_norm)
 library("spatialEco")
 focos_norm_inv <- (((focos_norm - max(focos_norm)) * -1) + min(focos_norm))
 names(focos_norm_inv) <- names(focos_norm)
-foc_norm_inv <- focos_norm_inv
-focos@data <- cbind(focos@data, foc_norm_inv)
+foc_inv <- focos_norm_inv
+focos@data <- cbind(focos@data, foc_inv)
+
+names_cols <- c("NUNIV", "VERSA", "Shp_L",
+                "Shp_A", "NUMPOIN", "focos_norm",
+                "foc_inv")
+
+names(focos)[] <- names_cols
 
 # Save result
 writeOGR(focos
@@ -97,7 +101,7 @@ ggsave(
 # Normalized
 
 p2 <- ggplot(focos_sf) +
-  geom_sf(aes_string(fill = "foc_norm_inv")) + 
+  geom_sf(aes_string(fill = "foc_inv")) + 
   scico::scale_fill_scico(palette = "lajolla", direction = -1) +
   theme_bw() +
   coord_sf() +

@@ -4,6 +4,7 @@ library(rgdal)
 library(dplyr)
 library(memisc)
 library(vegan)
+library(tibble)
 
 # Load polygon
 nivel6 <- shapefile("./PAT_territorio/PAT_ottonivel6_wgs84.shp")
@@ -14,42 +15,43 @@ fito <- raster("./fitofisio/cobertura_vegetal_nivel4_NA_wgs.tif")
 
 # Percentage of habitat per feature ---------------------------------------
 
+#species <- unique(fito[])
 fito_per_pol <- extract(fito, nivel6)
 
-#species <- unique(fito[])
+df <- enframe(fito_per_pol)
 
-richness_I <- function(x){specnumber(x)}
-richness <- sapply(fito_per_pol, richness_I)
-richness
 
-shannon_I <- function(x){
-  abund_total <- sum(x)
-  pi <- x/abund_total
-  ln_pi <- log(pi)
-  pi_mult <- pi* ln_pi
-  result <- -sum(pi_mult)
+# Creating table of habitat abundance per ottobacia 
+
+# Creating empty matrix
+sps = 15 # species number
+n <- nrow(df) # ottobacia number
+pam <- matrix(nrow = n, ncol = sps) # pam = presece absence matrix
+colnames(pam) <- paste0("fito", 1:sps)
+
+# Filling abundance table
+for (i in 1:n) {
+  pam[i, ] <- table(factor(df[i, 2][[1]][[1]], levels =  1:sps))
 }
-shannon <- sapply(fito_per_pol, shannon_I)
-shannon
+View(pam)
 
-simpson_I <- function(x){
-  abund_total <- sum(x)
-  pi <- x/abund_total
-  result2 <- 1- sum(pi^2)
-  return(result2)
-}
-simpson <- sapply(fito_per_pol, simpson_I)
-simpson
+# Calculating diversity indexes 
 
-# Add the percentage to the shapefile
+richness <- specnumber(pam)
+shannon <- diversity(pam) # Shannon I is the default
+simpson <- diversity(pam, "simpson")
+
+# richness equal to 0 or 1 had shannon equal to 0:
+plot(x = specnumber(pam), y = shannon)
+
+# Add results to shapefile
 nivel6@data <- cbind(nivel6@data, richness)
-nivel6@data <- cbind(nivel6@data, shannon) 
 nivel6@data <- cbind(nivel6@data, simpson)
+nivel6@data <- cbind(nivel6@data, shannon) 
 
 # Saving results in the shapefile
 writeOGR(nivel6, dsn = "./fitofisio",
-         layer = "fitofisio_nivel6", driver="ESRI Shapefile", overwrite=T)
-
+         layer = "fito_n6_divers", driver="ESRI Shapefile", overwrite=T)
 
 
 # Different weight for different domains ----------------------------------
@@ -61,28 +63,25 @@ mataatl <- shapefile("./PAT_territorio/nivel6_MA.shp")
 nivel6_CAA <- crop(nivel6, caatinga)
 nivel6_MA <- crop(nivel6, mataatl)
 
+pos_CAA <- match(nivel6_CAA$NUNIVOTTO6, nivel6$NUNIVOTTO6)
+pos_MA <- match(nivel6_MA$NUNIVOTTO6, nivel6$NUNIVOTTO6)
+
 # Normalizing
 range01  <- function(x){(x-min(x))/(max(x)-min(x))}
-shan_norm_CAA <- range01(nivel6_CAA@data$shannon)
+
+shan_norm_CAA <- range01(nivel6_CAA$shannon)
 shan_norm_CAA
-nivel6@data <- cbind(nivel6@data, shan_norm_CAA) 
-
-range01  <- function(x){(x-min(x))/(max(x)-min(x))}
-shan_norm_MA <- range01(nivel6_MA@data$shannon)
+shan_norm_MA <- range01(nivel6_MA$shannon)
 shan_norm_MA
-nivel6@data <- cbind(nivel6@data, shan_norm_MA) 
 
-shan_norm_w  <- rbind(shan_norm_CAA, shan_norm_MA)
-nivel6@data <- cbind(nivel6@data, shan_norm_w ) 
+nivel6@data$shan_w_int <- NA
+nivel6@data$shan_w_int[pos_CAA] <-  shan_norm_CAA
+nivel6@data$shan_w_int[pos_MA] <-  shan_norm_MA
 
 # Saving results in the shapefile
 writeOGR(nivel6, dsn = "./fitofisio",
-         layer = "fitofisio_nivel6_w", driver="ESRI Shapefile", overwrite=T)
+         layer = "fito_n6_divers_w_int", driver="ESRI Shapefile", overwrite=T)
 
-
-# Join data ---------------------------------------------------------------
-
-#Aqui juntar todas colunas no nivel6 que acaba com fogo que foi o ultimo
 
 
 # Plot --------------------------------------------------------------------
@@ -92,14 +91,15 @@ library(tidyverse)
 library(sf)
 library(ggplot2)
 library("gridExtra")
+library(colourpicker)
 
 # Habitat amount for conservation areas
 
 nivel6_sf <- st_as_sf(nivel6)
 
 p <- ggplot(nivel6_sf) +
-  geom_sf(aes_string(fill = "shannon")) + 
-  #scale_fill_gradient(low = "white", high = "darkgreen")+
+  geom_sf(aes_string(fill = "shan_w_int")) + 
+  scale_fill_gradient(low = "white", high = "#CD6889")+
   theme_bw() +
   coord_sf() +
   theme(
@@ -132,7 +132,7 @@ p
 
 ggsave(
   p,
-  file = "./INEMA/APPs/Union_APPs/APPs_fig.tiff",
+  file = "./fitofisio/shannon_fig.tiff",
   height = 20,
   width = 26,
   units = "cm"

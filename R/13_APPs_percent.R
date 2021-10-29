@@ -15,7 +15,7 @@ library(maptools)
 # writeRaster(app, "./PAT_territorio/PAT_APPs_all.tif")
 
 # Load polygon
-nivel6 <- shapefile("./PAT_territorio/PAT_ottonivel6_wgs84.shp")
+nivel6_2 <- shapefile("./PAT_territorio/PAT_ottonivel6_wgs84.shp")
 PAT <- shapefile("./PAT_territorio/PAT_wgs84.shp")
 
 # Load rasters
@@ -23,39 +23,41 @@ app <- raster("./APP/Recl_app_all_diss.tif")
 
 # Reproject polygon
 projection(app) <- projection(raster())
-nivel6 <- spTransform(nivel6, projection(app))
+nivel6_2 <- spTransform(nivel6_2, projection(app))
 PAT <- spTransform(PAT, projection(app))
 
 app[is.na(app)] <-0
 app <- mask(app, PAT)
 app[app != 0 & !is.na(app)] <- 1
-#plot(app)
+plot(app)
+plot(nivel6_2, border = "white")
+plot(nivel6_2[130, ], col = "red", add = T) #polygon to small
 
-
-app_per_pol <- extract(app, nivel6)
-#app_per_pol <- extract(app_1km_2, nivel6) #to test only
+app_per_pol <- extract(app, nivel6_2)
+#app_per_pol <- extract(app_1km_2, nivel6_2) #to test only
 
 func_perc <- function(x) {
-  (sum(x == 1) / length(x)) * 100
+  (sum(x == 1, na.rm=T) / length(x)) * 100
 }
 
 # func_perc(app_per_pol[[3]]) #to see only one
-#resultado <- lapply(app_per_pol, func_perc) #could use lapply, but then you need organize the list later
-app_percent <- sapply(app_per_pol, func_perc)
-app_percent
+app_perc <- sapply(app_per_pol, func_perc)
+app_perc
 
 # Add the percentage to the shapefile
-nivel6@data <- cbind(nivel6@data, app_percent) 
+nivel6_2@data <- cbind(nivel6_2@data, app_perc) 
 
 # Normalizing
 range01  <- function(x){(x-min(x))/(max(x)-min(x))}
-app_perc_norm <- range01(app_percent)
-app_perc_norm
-nivel6@data <- cbind(nivel6@data, app_perc_norm) 
+app_norm <- range01(app_perc)
+app_norm
+nivel6_2@data <- cbind(nivel6_2@data, app_norm)
+# nivel6_2@data <- cbind(nivel6_2@data, app_perc_norm, app_percent) 
+# nivel6_2@data$app_percent <- app_percent
 
 # Save result
-writeOGR(nivel6, dsn = "./INEMA/Spatial_files_PAT/Join_results/",
-         layer = "PAT_n6_edsdm_mapb_peso_neig_fg_app", driver="ESRI Shapefile", overwrite=T)
+writeOGR(nivel6_2, dsn = "./APP/",
+         layer = "app_perc_norm", driver="ESRI Shapefile", overwrite=T)
 
 
 
@@ -68,10 +70,10 @@ library("gridExtra")
 
 # Habitat amount for conservation areas
 
-nivel6_sf <- st_as_sf(nivel6)
+nivel6_2_sf <- st_as_sf(nivel6_2)
 
-p <- ggplot(nivel6_sf) +
-  geom_sf(aes_string(fill = "app_percent")) + 
+p <- ggplot(nivel6_2_sf) +
+  geom_sf(aes_string(fill = "app_norm")) + 
   scale_fill_gradient(low = "white", high = "darkblue")+
   theme_bw() +
   coord_sf() +
@@ -105,7 +107,7 @@ p
 
 ggsave(
   p,
-  file = "./INEMA/APPs/Union_APPs/APPs_fig.tiff",
+  file = "./APP/APPs_fig.tiff",
   height = 20,
   width = 26,
   units = "cm"
